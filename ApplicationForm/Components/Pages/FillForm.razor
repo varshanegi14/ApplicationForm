@@ -1,0 +1,70 @@
+@page "/FillForm"
+@using ApplicationForm.Entity
+@using ApplicationForm.Services
+@inject IFormService _FormService;
+@inject NavigationManager _navigationManager;
+<h3>Fill the Form</h3>
+<div>
+    <select class="form-select" aria-label="Default select example" @onchange="OnFormSelected">
+        @foreach (var applform in formsList)
+        {
+            <option value="@applform.Id">@applform.Name</option>
+        }
+    </select>
+    <div class="accordion" id="accordionExample" style="width: 100%; margin: 10px;">
+        @if (selectedForm != null)
+        {
+            <EditForm Model="@selectedForm" OnValidSubmit="SubmitForm">
+                @foreach (var question in selectedForm.Questions)
+                {
+                    <div class="mb-3">
+                        <label class="form-label">@question.Text</label>
+                        @if (question.QuestionType == QuestionType.TextType)
+                        {
+                            <input type="email" class="form-control" @bind-value="@question.TextTypesclass.Awnser"
+                                aria-describedby="emailHelp">
+                        }
+                        @* Handle other question types here *@
+                    </div>
+                }
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </EditForm>
+        }
+    </div>
+</div>
+
+@code {
+    public List<FormNumber> formsList = new List<FormNumber>();
+    public bool IsLoading { get; set; } = true;
+    public FormNumber selectedForm = new FormNumber();
+    public int selectedFormId;
+    protected override async void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            IsLoading = true;
+            StateHasChanged();
+            formsList = await _FormService.GetAll();
+            if (selectedFormId == 0 && formsList.Any())
+            {
+                selectedFormId = formsList[0].Id; // Set initial selection
+                selectedForm = await _FormService.GetById(selectedFormId);
+            }
+            IsLoading = false;
+            StateHasChanged();
+
+        }
+    }
+    public async Task SubmitForm()
+    {
+
+    }
+    private async Task OnFormSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value.ToString(), out var formId))
+        {
+            selectedFormId = formId;
+            selectedForm = await _FormService.GetById(selectedFormId);
+        }
+    }
+}

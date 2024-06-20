@@ -1,0 +1,146 @@
+﻿@page "/FormCreate"
+@using ApplicationForm.Entity
+@using ApplicationForm.Services
+@inject IQuestionService _QuestionService;
+@inject IFormService _FormService;
+@inject NavigationManager _navigationManager;
+<h3>CreateForm</h3>
+<div>
+    <EditForm Model="@formNumber" OnValidSubmit="SubmitQuestionForm">
+        <div class="mb-3">
+            <label for="exampleInputEmail1" class="form-label">Form Name</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" @bind-value="formNumber.Name"
+                aria-describedby="emailHelp">
+        </div>
+        <div class="mb-3">
+            <label for="exampleInputEmail1" class="form-label">Question </label>
+            <button type="button" class="btn btn-sm btn-link" style="float: right;" @onclick="AddQuestion"> Add More..
+            </button>
+            <div class="accordion" id="accordionExample" style="width: 100%; margin: 10px;">
+                @foreach (Question question in formNumber.Questions)
+                {
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Question</label>
+                        <input type="text" class="form-control" id="exampleInputEmail1" @bind-value="question.Text"
+                            aria-describedby="emailHelp">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Select Type Of Question</label>
+                        <select class="form-select" @bind="@question.QuestionType">
+                            <option value="@QuestionType.TextType">Text Type</option>
+                            <option value="@QuestionType.BoolType">Boolean Type</option>
+                            <option value="@QuestionType.DropDownType">DropDown Type</option>
+                            <option value="@QuestionType.MCQType">MCQ Type</option>
+                            <option value="@QuestionType.DateType">Date Type</option>
+                            <option value="@QuestionType.NumberType">Number Type</option>
+                        </select>
+                    </div>
+                    <div style="margin-top: 15px;margin-left: 5px;">
+                        <button type="button" class="btn btn-outline-danger" style="margin-left: 5px;height: 60%;"
+                            @onclick="() => RemoveElement(question)">Delete</button>
+                    </div>
+                    @if (question.QuestionType == QuestionType.TextType) // Boolean Type
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Text Type Specific Field</label>
+                            <input type="text" class="form-control" @bind-value="question.TextTypesclass.Awnser">
+                        </div>
+                    }
+                    else if (question.QuestionType == QuestionType.BoolType)
+                    {
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1"
+                                    @onchange="@(() => SelectedBool(question,"yes"))">
+                                <label class="form-check-label" for="flexRadioDefault1">yes </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1"
+                                    @onchange="@(() => SelectedBool(question,"No"))">
+                                <label class="form-check-label" for="flexRadioDefault1">No </label>
+                            </div>
+                        </div>
+                    }
+                    else if (question.QuestionType == QuestionType.DropDownType)
+                    {
+                        <div class="accordion" id="accordionExample" style="width: 100%; margin: 10px;"> </div>
+
+
+                        <div class="mb-3">
+                            <label class="form-label">Dropdown Type Specific Field</label>
+                            <select class="form-select" @bind="@question.DropDownClass.Awnser">
+                                <option value="qw">Select an option</option>
+                                <option value="ww">Option 1</option>
+                                <option value="ew">Option 2</option>
+                                <option value="rw">Option 3</option>
+                            </select>
+                        </div>
+                    }
+                    else if (question.QuestionType == QuestionType.DateType)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Date Type Specific Field</label>
+                            <input type="date" class="form-control" @bind="@question.DateTypeClass.Awnser">
+                        </div>
+                    }
+                    else if (question.QuestionType == QuestionType.NumberType)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Number Type Specific Field</label>
+                            <input type="number" class="form-control" @bind="@question.NumberTypeClass.Awnser">
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        <button class="btn btn-primary" type="submit" disabled="@IsSavingUpdating">
+            @if (IsSavingUpdating)
+            {
+                <div class="spinner-border spinner-border-sm" style="margin-right: 5px;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            }
+            Submit
+        </button>
+    </EditForm>
+</div>
+
+
+@code {
+    public FormNumber formNumber = new FormNumber();
+    private Boolean Perzonalizado = false;
+    public bool IsSavingUpdating { get; set; } = false;
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+    private async Task SubmitQuestionForm()
+    {
+        IsSavingUpdating = true;
+        StateHasChanged();
+        await _FormService.Add(formNumber);
+        _navigationManager.NavigateTo("/");
+        IsSavingUpdating = false;
+        StateHasChanged();
+
+    }
+    public void AddQuestion()
+    {
+        formNumber.Questions.Add(new Question());
+    }
+    public void RemoveElement(Question element)
+    {
+        formNumber.Questions.Remove(element);
+    }
+    private void ChangeQuestionType(Question question, string newType)
+    {
+        Enum.TryParse(newType, out QuestionType type);
+        question.QuestionType = type;
+    }
+    public void SelectedBool(Question question, string val)
+    {
+        Perzonalizado = false;
+        question.Booltypeclass.Awnser = val;
+    }
+}
